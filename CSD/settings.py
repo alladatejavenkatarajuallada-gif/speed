@@ -78,7 +78,6 @@ WSGI_APPLICATION = 'CSD.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # Use Supabase Session Pooler URL (IPv4 compatible) for production
-# Falls back to SQLite for local development
 _SUPABASE_POOLER_URL = 'postgresql://postgres.kvhwtbzeqdrbkntxjrxb:TEJAteja%4012@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres'
 _db_url = os.environ.get('DATABASE_URL', _SUPABASE_POOLER_URL)
 
@@ -87,8 +86,8 @@ if 'supabase.co' in _db_url and 'pooler' not in _db_url:
     _db_url = _SUPABASE_POOLER_URL
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=_db_url,
+    'default': dj_database_url.parse(
+        _db_url,
         conn_max_age=600,
         conn_health_checks=True,
     )
