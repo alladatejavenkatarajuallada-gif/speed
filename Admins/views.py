@@ -16,11 +16,11 @@ def AdminLoginCheck(request):
     return render(request, 'AdminLogin.html', {})
 
 def AdminHome(request):
-    return render(request, 'Admins/AdminHome.html',{})
+    return render(request, 'admins/AdminHome.html',{})
 
 def UserDetails(request):
     data = UserRegistrationModel.objects.all()
-    return render(request,'Admins/UserDetails.html',{'data':data})
+    return render(request,'admins/UserDetails.html',{'data':data})
 
 
 def ActivaUsers(request):
@@ -30,4 +30,4 @@ def ActivaUsers(request):
         print("PID = ", id, status)
         UserRegistrationModel.objects.filter(id=id).update(status=status)
         data = UserRegistrationModel.objects.all()
-        return render(request,'Admins/UserDetails.html',{'data':data})
+        return render(request,'admins/UserDetails.html',{'data':data})

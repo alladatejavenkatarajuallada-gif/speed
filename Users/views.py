@@ -46,7 +46,7 @@ def UserLoginCheck(request):
     return render(request, 'UserLogin.html', {})
 
 def UserHome(request):
-    return render(request, 'Users/UserHome.html', {})
+    return render(request, 'users/UserHome.html', {})
 
 
 
@@ -86,9 +86,9 @@ def upload_video(request):
 
         # Generate URL for the processed video (ensure it's relative to the MEDIA_URL)
         video_url = os.path.join(settings.MEDIA_URL, 'output_videos', os.path.basename(output_video_path))
-        return render(request, 'Users/result.html', {'video_url': video_url, 'car_data': car_data})
+        return render(request, 'users/result.html', {'video_url': video_url, 'car_data': car_data})
 
-    return render(request, 'Users/upload.html')
+    return render(request, 'users/upload.html')
 
 
 def process_video(video_path):
@@ -197,7 +197,7 @@ def live_camera(request):
     cap = cv2.VideoCapture(0)
     
     if not cap.isOpened():
-        return render(request, 'Users/upload.html', {'message': 'Error: Could not open camera.'})
+        return render(request, 'users/upload.html', {'message': 'Error: Could not open camera.'})
 
     scale_factor = 0.05
     fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -241,4 +241,4 @@ def live_camera(request):
     cap.release()
     cv2.destroyAllWindows()
 
-    return render(request, 'Users/upload.html', {'message': 'Live camera closed successfully.'})
+    return render(request, 'users/upload.html', {'message': 'Live camera closed successfully.'})
