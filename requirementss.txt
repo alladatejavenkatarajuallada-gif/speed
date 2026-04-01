@@ -58,7 +58,6 @@ python-dateutil==2.9.0.post0
 python-decouple==3.8
 python-dotenv==1.2.2
 pyunormalize==17.0.0
-pywin32==311
 PyYAML==6.0.3
 regex==2026.2.28
 requests==2.32.5
