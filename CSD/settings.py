@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,10 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$8su(!pyc*fb()tii7t^dq2er7xyj^-l0e)(ah$nc4f-+n_n-%'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-$8su(!pyc*fb()tii7t^dq2er7xyj^-l0e)(ah$nc4f-+n_n-%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -78,9 +77,22 @@ WSGI_APPLICATION = 'CSD.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Get DATABASE_URL and auto-fix Supabase direct connection to pooler (IPv4)
+_db_url = os.environ.get('DATABASE_URL', 'sqlite:///' + str(BASE_DIR / 'db.sqlite3'))
+if 'db.kvhwtbzeqdrbkntxjrxb.supabase.co' in _db_url:
+    _db_url = _db_url.replace(
+        'postgres:',
+        'postgres.kvhwtbzeqdrbkntxjrxb:',
+        1  # only replace the first occurrence (username, not scheme)
+    )
+    _db_url = _db_url.replace(
+        'db.kvhwtbzeqdrbkntxjrxb.supabase.co',
+        'aws-1-ap-southeast-1.pooler.supabase.com'
+    )
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')),
+        default=_db_url,
         conn_max_age=600,
         conn_health_checks=True,
     )
