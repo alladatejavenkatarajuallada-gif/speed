@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Media -> Let's ignore videos but keep the YOLO model
+media/uploaded_videos/
+media/output_videos/
+# Don't ignore the general media folder because we need yolov8n.pt

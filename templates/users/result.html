@@ -1,0 +1,98 @@
+{% extends 'Users/UserBase.html' %}
+{% block contents %}
+
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        .video-processed-section {
+            margin: 50px auto;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-processed-section h1 {
+            font-family: "Abril Fatface", serif;
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .video-processed-section p {
+            text-align: center;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .btn-download {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #3498db;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn-download:hover {
+            background-color: #2980b9;
+        }
+    </style>
+    <div class="container">
+        <div class="video-processed-section animate__animated animate__fadeIn">
+            <h1>Video Processing Complete</h1>
+            <p>Your video has been processed successfully. You can download the processed video below:</p>
+            <a href="{{ video_url }}" download="processed_video.mp4" class="btn-download mb-4">Download Processed Video</a>
+            
+            <h3 class="mt-5 text-center" style="font-family: 'Abril Fatface', serif; color: #333;">Detected Vehicles</h3>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered table-striped text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Average Speed (km/h)</th>
+                            <th>Status Indicator</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for car in car_data %}
+                        <tr>
+                            <td class="fw-bold">{{ car.car_id }}</td>
+                            <td>{{ car.avg_speed }}</td>
+                            <td>
+                                {% if 'Red' in car.status %}
+                                    <span class="badge bg-danger p-2">{{ car.status }}</span>
+                                {% elif 'Green' in car.status %}
+                                    <span class="badge bg-success p-2">{{ car.status }}</span>
+                                {% elif 'Yellow' in car.status %}
+                                    <span class="badge bg-warning text-dark p-2">{{ car.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border p-2">{{ car.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-muted fst-italic">No vehicles detected with complete speed data.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+// -----------------------
+// 1. Default Binding
+// -----------------------
+function show() {
+    console.log("Default Binding:", this.a);
+}
+
+var a = 10;   // global variable
+show();       // this -> global object
+
+
+// -----------------------
+// 2. Implicit Binding
+// -----------------------
+const obj = {
+    a: 20,
+    display: function () {
+        console.log("Implicit Binding:", this.a);
+    }
+};
+
+obj.display();   // this -> obj
+
+
+// -----------------------
+// 3. Explicit Binding (call, apply, bind)
+// -----------------------
+function printValue(b, c) {
+    console.log("Explicit Binding:", this.a, b, c);
+}
+
+const data = { a: 30 };
+
+printValue.call(data, 100, 200);      // call()
+printValue.apply(data, [100, 200]);   // apply()
+
+const boundFunction = printValue.bind(data);
+boundFunction(100, 200);              // bind()
+
+
+// -----------------------
+// 4. New Binding
+// -----------------------
+function Student(name, age) {
+    this.name = name;
+    this.age = age;
+}
+
+const s1 = new Student("John", 22);
+console.log("New Binding:", s1.name, s1.age);

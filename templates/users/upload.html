@@ -1,0 +1,97 @@
+{% extends 'Users/UserBase.html' %}
+{% load static %}
+{% block contents %}
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #f8f9fa;
+    }
+
+    .video-upload-section {
+        margin: 50px auto;
+        max-width: 600px;
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .video-upload-section h1 {
+        font-family: "Abril Fatface", serif;
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .btn-colab {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #ff6f00;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .btn-colab:hover {
+        background-color: #e65100;
+        color: #ffffff;
+    }
+
+    .btn-camera {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #3498db;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-camera:hover {
+        background-color: #2980b9;
+        color: #ffffff;
+    }
+</style>
+
+<div class="container">
+    <div class="video-upload-section animate__animated animate__fadeIn">
+        <h1>Car Speed Detection</h1>
+
+        {% if message %}
+        <div class="alert alert-info text-center">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <!-- ✅ Replace Upload with Colab Button -->
+        <h4 class="mt-4">Video Processing</h4>
+        <p class="text-muted">Use Google Colab for video processing.</p>
+
+        <a href="https://colab.research.google.com/" target="_blank" class="btn-colab">
+            Go to Colab for Video Processing
+        </a>
+
+        <hr style="margin: 30px 0; border: 1px solid #ddd;">
+
+        <!-- Live Camera Option -->
+        <h4 class="mt-4">Live Camera</h4>
+        <p class="text-muted">Use your webcam for real-time speed detection using OpenCV.</p>
+
+        <form action="{% url 'live_camera' %}" method="get">
+            <button type="submit" class="btn btn-camera">Open Live Camera</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

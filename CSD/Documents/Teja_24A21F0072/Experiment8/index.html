@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment 8 - MongoDB with Express and React</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background: #f0f4f7;
+            padding: 30px;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .product-item {
+            background: #ffffff;
+            border-left: 6px solid #0d6efd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .form-title {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const App = () => {
+
+    const [products, setProducts] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState(null);
+
+    const [formData, setFormData] = React.useState({
+        name: "",
+        price: "",
+        description: "",
+        category: ""
+    });
+
+    // Fetch products on mount
+    React.useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const mockProducts = [
+                { _id: '1', name: 'Laptop', price: 999.99, description: 'High-performance laptop', category: 'Electronics' },
+                { _id: '2', name: 'Smartphone', price: 699.99, description: 'Latest model', category: 'Electronics' },
+                { _id: '3', name: 'Headphones', price: 149.99, description: 'Noise cancelling', category: 'Accessories' }
+            ];
+
+            setProducts(mockProducts);
+            setLoading(false);
+
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        if (!formData.name || !formData.price) {
+            setError("Product Name and Price are required!");
+            return;
+        }
+
+        const newProduct = {
+            _id: Date.now().toString(),
+            name: formData.name,
+            price: parseFloat(formData.price),
+            description: formData.description,
+            category: formData.category
+        };
+
+        setProducts([...products, newProduct]);
+
+        setFormData({
+            name: '',
+            price: '',
+            description: '',
+            category: ''
+        });
+
+        setError(null);
+    };
+
+    return (
+        <div className="container">
+            <div className="main-card">
+
+                <h1 className="text-center mb-4 text-primary fw-bold">
+                    Product Management System
+                </h1>
+
+                {/* Product Form */}
+                <div className="card p-4 mb-4 shadow-sm">
+                    <h3 className="form-title mb-3">Add New Product</h3>
+
+                    {error && <div className="alert alert-danger">{error}</div>}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <label className="form-label">PRODUCT NAME</label>
+                            <input type="text" className="form-control" name="name"
+                                   value={formData.name} onChange={handleChange}/>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">COST</label>
+                            <input type="number" className="form-control" name="price"
+                                   value={formData.price} onChange={handleChange}/>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">DETAILS</label>
+                            <input type="text" className="form-control" name="description"
+                                   value={formData.description} onChange={handleChange}/>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">CATEGORY</label>
+                            <input type="text" className="form-control" name="category"
+                                   value={formData.category} onChange={handleChange}/>
+                        </div>
+
+                        <button className="btn btn-primary w-100">ADD PRODUCT</button>
+                    </form>
+                </div>
+
+                {/* Product List */}
+                <h3 className="text-primary">Products List</h3>
+
+                {loading ? (
+                    <div className="alert alert-info mt-3">Loading products...</div>
+                ) : products.length === 0 ? (
+                    <p className="alert alert-warning mt-3">No products found</p>
+                ) : (
+                    products.map(product => (
+                        <div key={product._id} className="product-item">
+                            <h4 className="text-primary">{product.name}</h4>
+                            <p><strong>Cost:</strong> ₹{product.price}</p>
+                            {product.description && <p><strong>Details:</strong> {product.description}</p>}
+                            {product.category && <p><strong>Category:</strong> {product.category}</p>}
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById("root"));
+
+</script>
+
+</body>
+</html>
