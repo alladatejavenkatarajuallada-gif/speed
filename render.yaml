@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: car-speed-detection
+    runtime: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn CSD.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
