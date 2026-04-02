@@ -188,57 +188,74 @@ def estimate_speed(prev_bbox, curr_bbox, fps, scale_factor):
                        (curr_center[1] - prev_center[1]) ** 2)
     return (distance * scale_factor) * fps * 3.6  # Convert m/s to km/h
 
+
 def live_camera(request):
     """
-    Opens the live camera, processes frames for car speed detection,
-    and displays the result in an OpenCV window.
+    Renders a page for live camera feed processing.
     """
-    model = YOLO(MODEL_PATH)
-    cap = cv2.VideoCapture(0)
-    
-    if not cap.isOpened():
-        return render(request, 'users/upload.html', {'message': 'Error: Could not open camera.'})
+    return render(request, 'users/live_camera.html')
 
-    scale_factor = 0.05
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    if fps == 0:
-        fps = 30
-    prev_positions = {}
+import base64
+import cv2
+import numpy as np
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from ultralytics import YOLO
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+# Pre-load the model to avoid re-loading on every frame
+model = YOLO(MODEL_PATH)
 
-        # Run YOLO inference
-        results = model(frame)
+@csrf_exempt
+def detect_live_frame(request):
+    """
+    Processes a single frame from the live camera and returning car counts/speeds.
+    """
+    if request.method == "POST":
+        try:
+            image_data = request.POST.get('image_data')
+            if not image_data:
+                return JsonResponse({'error': 'No image data provided'}, status=400)
 
-        for result in results[0].boxes:
-            x1, y1, x2, y2 = result.xyxy[0].cpu().numpy()
-            class_id = int(result.cls.cpu().item())
+            # Decode base64 image
+            format, imgstr = image_data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = base64.b64decode(imgstr)
+            
+            # Convert to numpy array
+            nparr = np.frombuffer(data, np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-            if class_id == 2:  # Class ID for cars in COCO dataset
-                car_id = str(int(x1))  # Unique ID based on bounding box x1
-                curr_bbox = (x1, y1, x2, y2)
+            if frame is None:
+                return JsonResponse({'error': 'Failed to decode image'}, status=400)
 
-                if car_id in prev_positions:
-                    # Estimate speed
-                    speed = estimate_speed(prev_positions[car_id], curr_bbox, fps, scale_factor)
-                    color = get_color_for_speed(speed)
-                    cv2.putText(frame, f"Speed: {speed:.2f} km/h", (int(x1), int(y1 - 10)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            # Run YOLO inference
+            results = model(frame)
+            
+            detections = []
+            car_count = 0
+            
+            for result in results[0].boxes:
+                x1, y1, x2, y2 = result.xyxy[0].cpu().numpy()
+                conf = float(result.conf.cpu().item())
+                class_id = int(result.cls.cpu().item())
 
-                prev_positions[car_id] = curr_bbox
+                if class_id == 2:  # Car
+                    car_count += 1
+                    detections.append({
+                        'x': int(x1),
+                        'y': int(y1),
+                        'w': int(x2 - x1),
+                        'h': int(y2 - y1),
+                        'conf': round(conf, 2)
+                    })
 
-        # Display the frame in an OpenCV window
-        cv2.imshow('Live Camera - Press Q to Exit', frame)
+            return JsonResponse({
+                'car_count': car_count,
+                'detections': detections,
+                'status': 'success'
+            })
+        except Exception as e:
+            print(f"Error in detect_live_frame: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
 
-        # Break the loop on 'q' key press
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # Release resources
-    cap.release()
-    cv2.destroyAllWindows()
-
-    return render(request, 'users/upload.html', {'message': 'Live camera closed successfully.'})
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

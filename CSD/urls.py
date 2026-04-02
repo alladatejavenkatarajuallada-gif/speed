@@ -45,6 +45,7 @@ urlpatterns = [
     path('upload_video/', usr.upload_video, name='upload_video'),
     path('process_video/', usr.upload_video, name='process_video'),
     path('live_camera/', usr.live_camera, name='live_camera'),
+    path('detect_live_frame/', usr.detect_live_frame, name='detect_live_frame'),
     ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

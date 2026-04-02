@@ -1,0 +1,217 @@
+{% extends 'users/UserBase.html' %}
+{% load static %}
+{% block contents %}
+
+<style>
+    .camera-container {
+        margin: 50px auto;
+        max-width: 800px;
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .camera-container h1 {
+        font-family: "Abril Fatface", serif;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .video-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        max-width: 640px;
+    }
+
+    #videoElement {
+        width: 100%;
+        background-color: #666;
+        border: 5px solid #3498db;
+        border-radius: 10px;
+    }
+
+    #overlayCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .btn-back {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #3498db;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .btn-back:hover {
+        background-color: #2980b9;
+        color: #ffffff;
+    }
+
+    .status-badge {
+        margin-top: 10px;
+        padding: 5px 15px;
+        display: inline-block;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+
+    .status-online {
+        background-color: #2ecc71;
+        color: white;
+    }
+
+    .status-offline {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .prediction-panel {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 5px solid #2ecc71;
+        text-align: left;
+    }
+    
+    .car-count {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+</style>
+
+<div class="container">
+    <div class="camera-container animate__animated animate__fadeIn">
+        <h1>Real-Time Car Detection</h1>
+        
+        <div id="status" class="status-badge status-offline">Initializing...</div>
+        
+        <div class="mt-4 video-wrapper">
+            <!-- Added playsinline and muted for maximum compatibility -->
+            <video id="videoElement" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+        </div>
+
+        <div class="prediction-panel">
+            <h5>Detection Results</h5>
+            <p>Status: <span id="detectionStatus">Scanning...</span></p>
+            <p>Cars Detected: <span id="carCount" class="car-count">0</span></p>
+        </div>
+
+        <a href="{% url 'upload_video' %}" class="btn-back">Back to Detection</a>
+    </div>
+</div>
+
+<!-- Hidden canvas for capturing frames -->
+<canvas id="captureCanvas" style="display: none;"></canvas>
+
+<script>
+    const video = document.getElementById("videoElement");
+    const overlayCanvas = document.getElementById("overlayCanvas");
+    const captureCanvas = document.getElementById("captureCanvas");
+    const status = document.getElementById("status");
+    const carCount = document.getElementById("carCount");
+    const detectionStatus = document.getElementById("detectionStatus");
+
+    const ctx = overlayCanvas.getContext("2d");
+    const captureCtx = captureCanvas.getContext("2d");
+
+    // Initialize Camera
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "environment",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            });
+            video.srcObject = stream;
+            status.textContent = "Live Camera Active";
+            status.classList.remove("status-offline");
+            status.classList.add("status-online");
+            
+            // Adjust canvas size when video starts playing
+            video.onloadedmetadata = () => {
+                overlayCanvas.width = video.videoWidth;
+                overlayCanvas.height = video.videoHeight;
+                captureCanvas.width = video.videoWidth;
+                captureCanvas.height = video.videoHeight;
+                
+                // Start detection loop
+                setInterval(captureAndDetect, 1500); // Every 1.5 seconds to balance performance
+            };
+        } catch (error) {
+            console.error("Camera access error:", error);
+            status.textContent = "Camera Access Denied";
+            status.classList.add("status-offline");
+            alert("Camera access is required for real-time detection. Please ensure you are using HTTPS and have granted permission.");
+        }
+    }
+
+    async function captureAndDetect() {
+        if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+        // Capture frame
+        captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+        const imageData = captureCanvas.toDataURL("image/jpeg", 0.7);
+
+        // Send to server
+        const formData = new FormData();
+        formData.append("image_data", imageData);
+
+        try {
+            detectionStatus.textContent = "Processing...";
+            const response = await fetch("{% url 'detect_live_frame' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                carCount.textContent = data.car_count;
+                detectionStatus.textContent = "Live Tracking Active";
+                drawDetections(data.detections);
+            } else {
+                detectionStatus.textContent = "Detection Error";
+            }
+        } catch (error) {
+            console.error("Detection error:", error);
+            detectionStatus.textContent = "Offline/Error";
+        }
+    }
+
+    function drawDetections(detections) {
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        ctx.strokeStyle = "#2ecc71";
+        ctx.lineWidth = 3;
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#2ecc71";
+
+        detections.forEach(det => {
+            ctx.strokeRect(det.x, det.y, det.w, det.h);
+            ctx.fillText(`Car: ${Math.round(det.conf * 100)}%`, det.x, det.y > 20 ? det.y - 5 : det.y + 20);
+        });
+    }
+
+    startCamera();
+</script>
+
+{% endblock %}
